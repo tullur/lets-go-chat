@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"github.com/tullur/lets-go-chat/internal/server"
+)
 
 func main() {
-	fmt.Println("Hello, World!")
+	server.Run(":3000")
 }
