@@ -3,7 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/tullur/lets-go-chat/internal/domain/user"
@@ -22,14 +25,28 @@ func HandleUserCreation(userRepo user.Repository) http.HandlerFunc {
 		Name string `json:"userName"`
 	}
 
+	type validatationError struct {
+		Err string `json:"error"`
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Expires-After", time.August.String())
+		w.Header().Set("X-Rate-Limit", strconv.Itoa(rand.Intn(20)))
+
 		request := map[string]string{}
 
 		json.NewDecoder(r.Body).Decode(&request)
 
+		if len(request["userName"]) == 0 || len(request["password"]) == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(validatationError{Err: "Empty username or password"})
+
+			return
+		}
+
 		hashedPassword, err := hasher.HashPassword(request["password"])
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 		}
 
 		createdUser := userRepo.Create(
