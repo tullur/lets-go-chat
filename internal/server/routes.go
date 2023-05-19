@@ -6,15 +6,17 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/tullur/lets-go-chat/internal/domain/user/memory"
 	"github.com/tullur/lets-go-chat/internal/handlers"
+	"github.com/tullur/lets-go-chat/internal/service"
 )
 
 func UserRoutes() http.Handler {
 	r := chi.NewRouter()
-	userInMemoryStore := memory.NewInMemoryRepository()
 
-	r.Get("/", handlers.HandleUserList(userInMemoryStore))
-	r.Post("/", handlers.HandleUserCreation(userInMemoryStore))
-	r.Post("/login", handlers.HandleUserLogin(userInMemoryStore))
+	userService := service.UserService{Repo: memory.NewInMemoryRepository()}
+
+	r.Get("/", handlers.HandleUserList(userService))
+	r.Post("/", handlers.HandleUserCreation(userService))
+	r.Post("/login", handlers.HandleUserLogin(userService))
 
 	return r
 }

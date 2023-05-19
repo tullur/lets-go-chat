@@ -2,103 +2,77 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/tullur/lets-go-chat/internal/domain/user"
-	"github.com/tullur/lets-go-chat/pkg/hasher"
+	"github.com/tullur/lets-go-chat/internal/service"
 )
 
-func HandleUserList(userRepo user.Repository) http.HandlerFunc {
+var request map[string]string
+
+type ErrorResponse struct {
+	Err string `json:"error"`
+}
+
+func HandleUserList(userService service.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(userRepo.List())
+		json.NewEncoder(w).Encode(userService.GetList())
 	}
 }
 
-func HandleUserCreation(userRepo user.Repository) http.HandlerFunc {
+func HandleUserCreation(userService service.UserService) http.HandlerFunc {
 	type userResponse struct {
 		Id   string `json:"id"`
 		Name string `json:"userName"`
 	}
 
-	type validatationError struct {
-		Err string `json:"error"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-Expires-After", time.August.String())
-		w.Header().Set("X-Rate-Limit", strconv.Itoa(rand.Intn(20)))
-
-		request := map[string]string{}
-
 		json.NewDecoder(r.Body).Decode(&request)
 
-		if len(request["userName"]) == 0 || len(request["password"]) == 0 {
+		user, err := userService.CreateUser(request["userName"], request["password"])
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(validatationError{Err: "Empty username or password"})
+			json.NewEncoder(w).Encode(ErrorResponse{Err: err.Error()})
 
 			return
 		}
 
-		hashedPassword, err := hasher.HashPassword(request["password"])
-		if err != nil {
-			log.Println(err)
-		}
-
-		createdUser := userRepo.Create(
-			user.User{
-				ID:       uuid.New(),
-				Name:     request["userName"],
-				Password: hashedPassword,
-			},
-		)
-
 		responseBody := userResponse{
-			Id:   createdUser.ID.String(),
-			Name: createdUser.Name,
+			Id:   user.ID.String(),
+			Name: user.Name,
 		}
 
 		w.WriteHeader(http.StatusCreated)
+
+		w.Header().Set("X-Expires-After", time.August.String())
+		w.Header().Set("X-Rate-Limit", strconv.Itoa(rand.Intn(20)))
+		w.Header().Set("Content-Type", "application/json")
+
 		json.NewEncoder(w).Encode(responseBody)
 	}
 }
 
-func HandleUserLogin(userRepo user.Repository) http.HandlerFunc {
+func HandleUserLogin(userService service.UserService) http.HandlerFunc {
 	type successResponse struct {
 		Url string `json:"url"`
 	}
 
-	type errorResponse struct {
-		Err string `json:"error"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
-		request := map[string]string{}
-
 		json.NewDecoder(r.Body).Decode(&request)
 
-		currentUser, err := userRepo.FindByName(request["userName"])
+		user, err := userService.LoginUser(request["userName"], request["password"])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(errorResponse{Err: err.Error()})
-
-			return
-		}
-
-		checker := hasher.CheckPasswordHash(request["password"], currentUser.Password)
-		if !checker {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(errorResponse{Err: "Invalid username/password"})
+			json.NewEncoder(w).Encode(ErrorResponse{Err: err.Error()})
 
 			return
 		}
 
 		responseBody := successResponse{
-			Url: "ws://fancy-chat.io/ws&token=one-time-token",
+			Url: fmt.Sprintf("ws://fancy-chat.io/ws&token=%s", user.ID.String()),
 		}
 
 		w.WriteHeader(http.StatusOK)
