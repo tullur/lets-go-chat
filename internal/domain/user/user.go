@@ -7,8 +7,10 @@ import (
 )
 
 var (
-	ErrEmptyValues     = errors.New("empty username or password")
-	ErrInvalidPassword = errors.New("invalid password hash")
+	ErrEmptyValues         = errors.New("empty username or password")
+	ErrInvalidPassword     = errors.New("invalid password hash")
+	ErrShortUserName       = errors.New("user name is too short (minimum is 4 characters)")
+	ErrShortPasswordLength = errors.New("password is too short (minimum is 8 characters)")
 )
 
 type User struct {
@@ -17,7 +19,7 @@ type User struct {
 	Password string    `json:"password"`
 }
 
-func NewUser(name, password string) (User, error) {
+func New(name, password string) (User, error) {
 	if name == "" || password == "" {
 		return User{}, ErrEmptyValues
 	}

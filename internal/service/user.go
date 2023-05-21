@@ -6,16 +6,30 @@ import (
 )
 
 type UserService struct {
-	Repo user.Repository
+	repo user.Repository
+}
+
+func NewUser(repository user.Repository) *UserService {
+	return &UserService{
+		repo: repository,
+	}
 }
 
 func (u *UserService) GetList() []user.User {
-	return u.Repo.List()
+	return u.repo.List()
 }
 
-func (u *UserService) CreateUser(name, password string) (user.User, error) {
+func (u *UserService) Create(name, password string) (user.User, error) {
 	if name == "" || password == "" {
 		return user.User{}, user.ErrEmptyValues
+	}
+
+	if len(name) < 4 {
+		return user.User{}, user.ErrShortUserName
+	}
+
+	if len(password) < 8 {
+		return user.User{}, user.ErrShortPasswordLength
 	}
 
 	hashedPassword, err := hasher.HashPassword(password)
@@ -23,21 +37,18 @@ func (u *UserService) CreateUser(name, password string) (user.User, error) {
 		return user.User{}, err
 	}
 
-	user, err := user.NewUser(name, hashedPassword)
+	user, err := user.New(name, hashedPassword)
 	if err != nil {
 		return user, err
 	}
 
-	err = u.Repo.Create(user)
-	if err != nil {
-		return user, err
-	}
+	u.repo.Create(user)
 
 	return user, nil
 }
 
-func (u *UserService) LoginUser(name, password string) (user.User, error) {
-	currentUser, err := u.Repo.FindByName(name)
+func (u *UserService) Login(name, password string) (user.User, error) {
+	currentUser, err := u.repo.FindByName(name)
 	if err != nil {
 		return user.User{}, err
 	}

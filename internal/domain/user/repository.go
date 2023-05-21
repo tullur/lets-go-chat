@@ -8,6 +8,6 @@ var (
 
 type Repository interface {
 	List() []User
-	Create(user User) error
+	Create(user User)
 	FindByName(userName string) (User, error)
 }

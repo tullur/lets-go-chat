@@ -16,10 +16,8 @@ func (repo *InMemoryRepo) List() []user.User {
 	return repo.Users
 }
 
-func (repo *InMemoryRepo) Create(user user.User) error {
+func (repo *InMemoryRepo) Create(user user.User) {
 	repo.Users = append(repo.Users, user)
-
-	return nil
 }
 
 func (repo *InMemoryRepo) FindByName(userName string) (user.User, error) {
