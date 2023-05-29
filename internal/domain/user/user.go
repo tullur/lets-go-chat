@@ -14,6 +14,11 @@ var (
 	ErrShortPasswordLength = errors.New("password is too short (minimum is 8 characters)")
 )
 
+const (
+	userNameLength = 4
+	passwordLength = 8
+)
+
 type User struct {
 	id       uuid.UUID
 	name     string
@@ -59,11 +64,11 @@ func (u *User) validate() error {
 		return ErrEmptyValues
 	}
 
-	if len(u.name) < 4 {
+	if len(u.name) < userNameLength {
 		return ErrShortUserName
 	}
 
-	if len(u.password) < 8 {
+	if len(u.password) < passwordLength {
 		return ErrShortPasswordLength
 	}
 
