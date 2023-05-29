@@ -12,7 +12,7 @@ import (
 func UserRoutes() http.Handler {
 	r := chi.NewRouter()
 
-	userService := service.UserService{Repo: memory.NewInMemoryRepository()}
+	userService := service.NewUserService(memory.NewInMemoryRepository())
 
 	r.Get("/", handlers.HandleUserList(userService))
 	r.Post("/", handlers.HandleUserCreation(userService))

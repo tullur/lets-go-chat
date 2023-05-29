@@ -5,7 +5,7 @@ build:
 
 run:
 	go build -o build/${BINARY_NAME} cmd/lets-go-chat/main.go
-	bin/${BINARY_NAME}
+	build/${BINARY_NAME}
 
 test:
 	go test ./...

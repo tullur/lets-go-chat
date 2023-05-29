@@ -17,13 +17,13 @@ type ErrorResponse struct {
 	Err string `json:"error"`
 }
 
-func HandleUserList(userService service.UserService) http.HandlerFunc {
+func HandleUserList(userService *service.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(userService.GetList())
 	}
 }
 
-func HandleUserCreation(userService service.UserService) http.HandlerFunc {
+func HandleUserCreation(userService *service.UserService) http.HandlerFunc {
 	type userResponse struct {
 		Id   string `json:"id"`
 		Name string `json:"userName"`
@@ -41,8 +41,8 @@ func HandleUserCreation(userService service.UserService) http.HandlerFunc {
 		}
 
 		responseBody := userResponse{
-			Id:   user.ID.String(),
-			Name: user.Name,
+			Id:   user.Id(),
+			Name: user.Name(),
 		}
 
 		w.WriteHeader(http.StatusCreated)
@@ -55,7 +55,7 @@ func HandleUserCreation(userService service.UserService) http.HandlerFunc {
 	}
 }
 
-func HandleUserLogin(userService service.UserService) http.HandlerFunc {
+func HandleUserLogin(userService *service.UserService) http.HandlerFunc {
 	type successResponse struct {
 		Url string `json:"url"`
 	}
@@ -72,7 +72,7 @@ func HandleUserLogin(userService service.UserService) http.HandlerFunc {
 		}
 
 		responseBody := successResponse{
-			Url: fmt.Sprintf("ws://fancy-chat.io/ws&token=%s", user.ID.String()),
+			Url: fmt.Sprintf("ws://fancy-chat.io/ws&token=%s", user.Id()),
 		}
 
 		w.WriteHeader(http.StatusOK)

@@ -1,51 +1,42 @@
 package service
 
-import (
-	"github.com/tullur/lets-go-chat/internal/domain/user"
-	"github.com/tullur/lets-go-chat/pkg/hasher"
-)
+import "github.com/tullur/lets-go-chat/internal/domain/user"
 
 type UserService struct {
-	Repo user.Repository
+	repository user.Repository
 }
 
 func (u *UserService) GetList() []user.User {
-	return u.Repo.List()
+	return u.repository.List()
 }
 
-func (u *UserService) CreateUser(name, password string) (user.User, error) {
-	if name == "" || password == "" {
-		return user.User{}, user.ErrEmptyValues
+func (u *UserService) CreateUser(name, password string) (*user.User, error) {
+	user, err := user.New(name, password)
+	if err != nil {
+		return nil, err
 	}
 
-	hashedPassword, err := hasher.HashPassword(password)
+	err = u.repository.Create(user)
 	if err != nil {
-		return user.User{}, err
-	}
-
-	user, err := user.NewUser(name, hashedPassword)
-	if err != nil {
-		return user, err
-	}
-
-	err = u.Repo.Create(user)
-	if err != nil {
-		return user, err
+		return nil, err
 	}
 
 	return user, nil
 }
 
 func (u *UserService) LoginUser(name, password string) (user.User, error) {
-	currentUser, err := u.Repo.FindByName(name)
+	currentUser, err := u.repository.FindByName(name)
 	if err != nil {
 		return user.User{}, err
 	}
 
-	checker := hasher.CheckPasswordHash(password, currentUser.Password)
-	if !checker {
-		return user.User{}, user.ErrInvalidPassword
+	verified, err := currentUser.VerifyPassword(password)
+	if !verified {
+		return user.User{}, err
 	}
-
 	return currentUser, nil
+}
+
+func NewUserService(repository user.Repository) *UserService {
+	return &UserService{repository: repository}
 }
