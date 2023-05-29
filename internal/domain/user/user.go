@@ -32,12 +32,9 @@ func New(name, password string) (*User, error) {
 		return nil, err
 	}
 
-	hashedPassword, err := hasher.HashPassword(password)
-	if err != nil {
+	if err := user.hashPassword(); err != nil {
 		return nil, err
 	}
-
-	user.password = hashedPassword
 
 	return user, nil
 }
@@ -57,6 +54,17 @@ func (u *User) VerifyPassword(password string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (u *User) hashPassword() error {
+	hashedPassword, err := hasher.HashPassword(u.password)
+	if err != nil {
+		return err
+	}
+
+	u.password = hashedPassword
+
+	return nil
 }
 
 func (u *User) validate() error {
