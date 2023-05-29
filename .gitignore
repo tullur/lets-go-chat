@@ -19,3 +19,10 @@
 
 # Go workspace file
 go.work
+
+# Dev build
+build/
+tmp/
+
+# Environment variables
+.env
