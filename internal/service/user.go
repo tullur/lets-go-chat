@@ -24,16 +24,17 @@ func (u *UserService) CreateUser(name, password string) (*user.User, error) {
 	return user, nil
 }
 
-func (u *UserService) LoginUser(name, password string) (user.User, error) {
+func (u *UserService) LoginUser(name, password string) (*user.User, error) {
 	currentUser, err := u.repository.FindByName(name)
 	if err != nil {
-		return user.User{}, err
+		return nil, err
 	}
 
 	verified, err := currentUser.VerifyPassword(password)
 	if !verified {
-		return user.User{}, err
+		return nil, err
 	}
+
 	return currentUser, nil
 }
 

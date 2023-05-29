@@ -22,12 +22,12 @@ func (repo *InMemoryRepo) Create(user *user.User) error {
 	return nil
 }
 
-func (repo *InMemoryRepo) FindByName(userName string) (user.User, error) {
+func (repo *InMemoryRepo) FindByName(userName string) (*user.User, error) {
 	for _, v := range repo.Users {
 		if v.Name() == userName {
-			return v, nil
+			return &v, nil
 		}
 	}
 
-	return user.User{}, user.ErrUserNotFound
+	return nil, user.ErrUserNotFound
 }
