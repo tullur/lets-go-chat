@@ -16,18 +16,18 @@ func (repo *InMemoryRepo) List() []user.User {
 	return repo.Users
 }
 
-func (repo *InMemoryRepo) Create(user user.User) error {
-	repo.Users = append(repo.Users, user)
+func (repo *InMemoryRepo) Create(user *user.User) error {
+	repo.Users = append(repo.Users, *user)
 
 	return nil
 }
 
-func (repo *InMemoryRepo) FindByName(userName string) (user.User, error) {
+func (repo *InMemoryRepo) FindByName(userName string) (*user.User, error) {
 	for _, v := range repo.Users {
-		if v.Name == userName {
-			return v, nil
+		if v.Name() == userName {
+			return &v, nil
 		}
 	}
 
-	return user.User{}, user.ErrUserNotFound
+	return nil, user.ErrUserNotFound
 }
