@@ -1,9 +1,39 @@
 package service
 
-import "github.com/tullur/lets-go-chat/internal/domain/user"
+import (
+	"github.com/tullur/lets-go-chat/internal/domain/user"
+	"github.com/tullur/lets-go-chat/internal/domain/user/memory"
+)
+
+type UserConfiguration func(u *UserService) error
 
 type UserService struct {
 	repository user.Repository
+}
+
+func NewUserService(cfgs ...UserConfiguration) (*UserService, error) {
+	us := &UserService{}
+
+	for _, cfg := range cfgs {
+		err := cfg(us)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return us, nil
+}
+
+func WithRepository(ur user.Repository) UserConfiguration {
+	return func(u *UserService) error {
+		u.repository = ur
+		return nil
+	}
+}
+
+func WithInMemoryRepository() UserConfiguration {
+	repository := memory.NewInMemoryRepository()
+	return WithRepository(repository)
 }
 
 func (u *UserService) GetList() []user.User {
@@ -36,8 +66,4 @@ func (u *UserService) LoginUser(name, password string) (*user.User, error) {
 	}
 
 	return currentUser, nil
-}
-
-func NewUserService(repository user.Repository) *UserService {
-	return &UserService{repository: repository}
 }
