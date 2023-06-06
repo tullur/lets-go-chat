@@ -19,6 +19,7 @@ func Run(port string) {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Mount("/user", UserRoutes())
+		r.Mount("/chat", ChatRoutes())
 	})
 
 	err := http.ListenAndServe(port, r)

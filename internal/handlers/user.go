@@ -64,7 +64,7 @@ func HandleUserLogin(userService *service.UserService) http.HandlerFunc {
 		}
 
 		responseBody := loginUserResponse{
-			Url: fmt.Sprintf("ws://fancy-chat.io/ws&token=%s", user.Id()),
+			Url: fmt.Sprintf("ws://%s/chat&token=%s", r.Host, user.Id()),
 		}
 
 		w.Header().Set("X-Expires-After", time.August.String())

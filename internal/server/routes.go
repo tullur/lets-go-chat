@@ -23,3 +23,14 @@ func UserRoutes() http.Handler {
 
 	return r
 }
+
+func ChatRoutes() http.Handler {
+	r := chi.NewRouter()
+
+	r.Get("/users", handlers.HandleGetActiveUsers())
+	r.Handle("/", handlers.HandleGorillaChat())
+
+	go handlers.HandleMessages()
+
+	return r
+}
