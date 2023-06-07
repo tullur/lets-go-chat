@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/tullur/lets-go-chat/internal/domain/chat"
 	"github.com/tullur/lets-go-chat/internal/service"
 )
 
@@ -62,12 +61,13 @@ func LoginUser(userService *service.UserService) http.HandlerFunc {
 			return
 		}
 
-		token := chat.NewToken(user.Id())
+		tokenId, tokenExpires := service.GenerateAccessToken(user)
+
 		responseBody := loginUserResponse{
-			Url: fmt.Sprintf("ws://%s/v1/chat?token=%s", r.Host, token.Id()),
+			Url: fmt.Sprintf("ws://%s/v1/chat?token=%s", r.Host, tokenId),
 		}
 
-		w.Header().Set("X-Expires-After", token.ExpiresAfter())
+		w.Header().Set("X-Expires-After", tokenExpires)
 		w.Header().Set("X-Rate-Limit", strconv.Itoa(100))
 		w.Header().Set("Content-Type", "application/json")
 
