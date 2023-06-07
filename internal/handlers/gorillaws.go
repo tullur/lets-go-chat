@@ -6,14 +6,15 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/tullur/lets-go-chat/internal/domain/chat"
 )
 
 var (
 	clients    = make(map[*websocket.Conn]bool)
-	broadcast  = make(chan Message)
+	broadcast  = make(chan chat.Message)
 	register   = make(chan *websocket.Conn)
 	unregister = make(chan *websocket.Conn)
-	users      = make(chan []string)
+	users      = make([]string, 0, len(clients))
 )
 
 var upgrader = websocket.Upgrader{
@@ -21,13 +22,18 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-type Message struct {
-	Sender  *websocket.Conn
-	Content []byte
+func authenticate(token string) bool {
+	return token != ""
 }
 
 func HandleGorillaChat() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		token := r.URL.Query().Get("token")
+		if !authenticate(token) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Println(err)
@@ -50,7 +56,7 @@ func HandleGorillaChat() http.HandlerFunc {
 
 			log.Printf("%s sent: %s\n", conn.RemoteAddr(), string(msg))
 
-			broadcast <- Message{Sender: conn, Content: msg}
+			broadcast <- chat.Message{Sender: conn, Content: msg}
 
 			if err = conn.WriteMessage(msgType, msg); err != nil {
 				log.Println(err)
@@ -60,7 +66,7 @@ func HandleGorillaChat() http.HandlerFunc {
 	}
 }
 
-func HandleGetActiveUsers() http.HandlerFunc {
+func GetActiveUsers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(getUserList())
 	}
@@ -71,15 +77,12 @@ func HandleMessages() {
 		select {
 		case client := <-register:
 			clients[client] = true
-			usersList := getUserList()
-			sendUserList(usersList)
+			sendUserList(getUserList())
 		case client := <-unregister:
 			if _, ok := clients[client]; ok {
 				delete(clients, client)
 				client.Close()
-				usersList := getUserList()
-				sendUserList(usersList)
-
+				sendUserList(getUserList())
 			}
 		case message := <-broadcast:
 			for client := range clients {
@@ -95,13 +98,12 @@ func HandleMessages() {
 	}
 }
 
-func getUserList() []string {
-	usersList := make([]string, 0, len(clients))
+func getUserList() (users []string) {
 	for client := range clients {
-		usersList = append(usersList, client.RemoteAddr().String())
+		users = append(users, client.RemoteAddr().String())
 	}
 
-	return usersList
+	return
 }
 
 func sendUserList(usersList []string) {

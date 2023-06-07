@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/tullur/lets-go-chat/internal/domain/chat"
 	"github.com/tullur/lets-go-chat/internal/service"
 )
 
@@ -63,8 +64,9 @@ func HandleUserLogin(userService *service.UserService) http.HandlerFunc {
 			return
 		}
 
+		token := chat.NewToken(user.Id())
 		responseBody := loginUserResponse{
-			Url: fmt.Sprintf("ws://%s/chat&token=%s", r.Host, user.Id()),
+			Url: fmt.Sprintf("ws://%s/chat&token=%s", r.Host, token.Id()),
 		}
 
 		w.Header().Set("X-Expires-After", time.August.String())

@@ -27,7 +27,7 @@ func UserRoutes() http.Handler {
 func ChatRoutes() http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/users", handlers.HandleGetActiveUsers())
+	r.Get("/users", handlers.GetActiveUsers())
 	r.Handle("/", handlers.HandleGorillaChat())
 
 	go handlers.HandleMessages()
