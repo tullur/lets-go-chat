@@ -1,4 +1,4 @@
-package chat
+package token
 
 import (
 	"time"
@@ -12,7 +12,7 @@ type Token struct {
 	expiresAfter time.Time
 }
 
-func NewToken(userId string) *Token {
+func New(userId string) *Token {
 	return &Token{id: uuid.New(), userId: uuid.MustParse(userId), expiresAfter: time.Now().Add(time.Hour)}
 }
 

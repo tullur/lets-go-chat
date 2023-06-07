@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -9,22 +8,17 @@ import (
 	"github.com/tullur/lets-go-chat/internal/service"
 )
 
-func UserRoutes() http.Handler {
+func UserRoutes(userService *service.UserService, chatService *service.ChatService) http.Handler {
 	r := chi.NewRouter()
-
-	userService, err := service.NewUserService(service.WithInMemoryRepository())
-	if err != nil {
-		log.Fatalln(err)
-	}
 
 	r.Get("/", handlers.GetUsers(userService))
 	r.Post("/", handlers.CreateUser(userService))
-	r.Post("/login", handlers.LoginUser(userService))
+	r.Post("/login", handlers.LoginUser(userService, chatService))
 
 	return r
 }
 
-func ChatRoutes() http.Handler {
+func ChatRoutes(userService *service.UserService, chatService *service.ChatService) http.Handler {
 	r := chi.NewRouter()
 
 	r.Handle("/", handlers.ChatConnection())

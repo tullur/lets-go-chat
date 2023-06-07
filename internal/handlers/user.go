@@ -51,7 +51,7 @@ func CreateUser(userService *service.UserService) http.HandlerFunc {
 	}
 }
 
-func LoginUser(userService *service.UserService) http.HandlerFunc {
+func LoginUser(userService *service.UserService, chatService *service.ChatService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&requestParams)
 
@@ -61,13 +61,17 @@ func LoginUser(userService *service.UserService) http.HandlerFunc {
 			return
 		}
 
-		tokenId, tokenExpires := service.GenerateAccessToken(user)
-
-		responseBody := loginUserResponse{
-			Url: fmt.Sprintf("ws://%s/v1/chat?token=%s", r.Host, tokenId),
+		token, err := chatService.GenerateAccessToken(user)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		w.Header().Set("X-Expires-After", tokenExpires)
+		responseBody := loginUserResponse{
+			Url: fmt.Sprintf("ws://%s/v1/chat?token=%s", r.Host, token.Id()),
+		}
+
+		w.Header().Set("X-Expires-After", token.ExpiresAfter())
 		w.Header().Set("X-Rate-Limit", strconv.Itoa(100))
 		w.Header().Set("Content-Type", "application/json")
 
