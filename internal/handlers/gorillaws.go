@@ -26,7 +26,7 @@ func authenticate(token string) bool {
 	return token != ""
 }
 
-func HandleGorillaChat() http.HandlerFunc {
+func ChatConnection() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token := r.URL.Query().Get("token")
 		if !authenticate(token) {
@@ -40,15 +40,17 @@ func HandleGorillaChat() http.HandlerFunc {
 			return
 		}
 
-		register <- conn
+		client := &chat.Client{UserID: token, Connection: conn}
+
+		register <- client.Connection
 
 		defer func() {
-			unregister <- conn
-			conn.Close()
+			unregister <- client.Connection
+			client.Connection.Close()
 		}()
 
 		for {
-			msgType, msg, err := conn.ReadMessage()
+			msgType, msg, err := client.Connection.ReadMessage()
 			if err != nil {
 				log.Println(err)
 				break
@@ -56,7 +58,7 @@ func HandleGorillaChat() http.HandlerFunc {
 
 			log.Printf("%s sent: %s\n", conn.RemoteAddr(), string(msg))
 
-			broadcast <- chat.Message{Sender: conn, Content: msg}
+			broadcast <- chat.Message{Sender: client.Connection, Content: msg}
 
 			if err = conn.WriteMessage(msgType, msg); err != nil {
 				log.Println(err)
@@ -66,13 +68,13 @@ func HandleGorillaChat() http.HandlerFunc {
 	}
 }
 
-func GetActiveUsers() http.HandlerFunc {
+func GetChatUsers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(getUserList())
 	}
 }
 
-func HandleMessages() {
+func BroadcastMessages() {
 	for {
 		select {
 		case client := <-register:

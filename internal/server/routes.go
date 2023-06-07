@@ -17,9 +17,9 @@ func UserRoutes() http.Handler {
 		log.Fatalln(err)
 	}
 
-	r.Get("/", handlers.HandleUserList(userService))
-	r.Post("/", handlers.HandleUserCreation(userService))
-	r.Post("/login", handlers.HandleUserLogin(userService))
+	r.Get("/", handlers.GetUsers(userService))
+	r.Post("/", handlers.CreateUser(userService))
+	r.Post("/login", handlers.LoginUser(userService))
 
 	return r
 }
@@ -27,10 +27,10 @@ func UserRoutes() http.Handler {
 func ChatRoutes() http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/users", handlers.GetActiveUsers())
-	r.Handle("/", handlers.HandleGorillaChat())
+	r.Handle("/", handlers.ChatConnection())
+	r.Get("/users", handlers.GetChatUsers())
 
-	go handlers.HandleMessages()
+	go handlers.BroadcastMessages()
 
 	return r
 }
