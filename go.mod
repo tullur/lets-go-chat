@@ -7,6 +7,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	golang.org/x/crypto v0.9.0
-	golang.org/x/net v0.10.0
-	golang.org/x/sys v0.8.0 // indirect
 )
+
+require golang.org/x/sys v0.8.0 // indirect

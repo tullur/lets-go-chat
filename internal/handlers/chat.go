@@ -1,54 +1,118 @@
 package handlers
 
 import (
-	"io"
+	"encoding/json"
 	"log"
+	"net/http"
 
-	"golang.org/x/net/websocket"
+	"github.com/gorilla/websocket"
+	"github.com/tullur/lets-go-chat/internal/domain/chat"
 )
 
-type Server struct {
-	conns map[*websocket.Conn]bool
+var (
+	clients    = make(map[*websocket.Conn]bool)
+	broadcast  = make(chan chat.Message)
+	register   = make(chan *websocket.Conn)
+	unregister = make(chan *websocket.Conn)
+	users      = make([]string, 0, len(clients))
+)
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 }
 
-func NewServer() *Server {
-	return &Server{
-		conns: make(map[*websocket.Conn]bool),
-	}
+func authenticate(token string) bool {
+	return token != ""
 }
 
-func (s *Server) HandleWS(ws *websocket.Conn) {
-	s.conns[ws] = true
+func ChatConnection() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token := r.URL.Query().Get("token")
+		if !authenticate(token) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 
-	s.readLoop(ws)
-}
-
-func (s *Server) readLoop(ws *websocket.Conn) {
-	buf := make([]byte, 1024)
-
-	for {
-		n, err := ws.Read(buf)
+		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			if err == io.EOF {
+			log.Println(err)
+			return
+		}
+
+		client := &chat.Client{UserID: token, Connection: conn}
+
+		register <- client.Connection
+
+		defer func() {
+			unregister <- client.Connection
+			client.Connection.Close()
+		}()
+
+		for {
+			msgType, msg, err := client.Connection.ReadMessage()
+			if err != nil {
+				log.Println(err)
 				break
 			}
 
-			log.Println("Read error:", err)
-			continue
+			log.Printf("%s sent: %s\n", conn.RemoteAddr(), string(msg))
+
+			broadcast <- chat.Message{Sender: client.Connection, Content: msg}
+
+			if err = conn.WriteMessage(msgType, msg); err != nil {
+				log.Println(err)
+				break
+			}
 		}
-
-		msg := buf[:n]
-
-		s.broadcast(msg)
 	}
 }
 
-func (s *Server) broadcast(b []byte) {
-	for ws := range s.conns {
-		go func(ws *websocket.Conn) {
-			if _, err := ws.Write(b); err != nil {
-				log.Println("Error: ", err)
+func GetChatUsers() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(getUserList())
+	}
+}
+
+func BroadcastMessages() {
+	for {
+		select {
+		case client := <-register:
+			clients[client] = true
+			sendUserList(getUserList())
+		case client := <-unregister:
+			if _, ok := clients[client]; ok {
+				delete(clients, client)
+				client.Close()
+				sendUserList(getUserList())
 			}
-		}(ws)
+		case message := <-broadcast:
+			for client := range clients {
+				if client != message.Sender {
+					err := client.WriteMessage(websocket.TextMessage, message.Content)
+					if err != nil {
+						log.Println(err)
+						break
+					}
+				}
+			}
+		}
+	}
+}
+
+func getUserList() (users []string) {
+	for client := range clients {
+		users = append(users, client.RemoteAddr().String())
+	}
+
+	return
+}
+
+func sendUserList(usersList []string) {
+	for client := range clients {
+		err := client.WriteJSON(usersList)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }
