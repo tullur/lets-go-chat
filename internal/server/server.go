@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/tullur/lets-go-chat/internal/domain/chat/token/memory"
 	"github.com/tullur/lets-go-chat/internal/handlers"
 	"github.com/tullur/lets-go-chat/internal/service"
 )
@@ -28,12 +27,15 @@ func Run(port string) {
 		log.Fatalln(err)
 	}
 
-	tokenService := service.NewTokenService(memory.NewMemoryTokenRepositorysitory())
+	tokenService, err := service.NewTokenService(service.WithInMemoryTokenRepository())
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Mount("/user", UserRoutes(userService, tokenService))
 		r.Mount("/chat", ChatRoutes(userService, tokenService))
 	})
 
-	http.ListenAndServe(port, r)
+	log.Fatalln(http.ListenAndServe(port, r))
 }

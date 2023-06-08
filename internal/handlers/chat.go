@@ -7,14 +7,14 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/tullur/lets-go-chat/internal/domain/chat"
+	"github.com/tullur/lets-go-chat/internal/service"
 )
 
 var (
-	clients    = make(map[*websocket.Conn]bool)
+	clients    = make(map[*chat.Client]bool)
+	register   = make(chan *chat.Client)
+	unregister = make(chan *chat.Client)
 	broadcast  = make(chan chat.Message)
-	register   = make(chan *websocket.Conn)
-	unregister = make(chan *websocket.Conn)
-	users      = make([]string, 0, len(clients))
 )
 
 var upgrader = websocket.Upgrader{
@@ -22,14 +22,22 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func authenticate(token string) bool {
-	return token != ""
+func GetChatUsers() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(getUserList())
+	}
 }
 
-func ChatConnection() http.HandlerFunc {
+func ChatConnection(chatService *service.ChatService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token := r.URL.Query().Get("token")
 		if !authenticate(token) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		currentToken, err := chatService.GetToken(token)
+		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -40,12 +48,13 @@ func ChatConnection() http.HandlerFunc {
 			return
 		}
 
-		client := &chat.Client{UserID: token, Connection: conn}
+		client := &chat.Client{UserID: currentToken.Id(), Connection: conn}
 
-		register <- client.Connection
+		register <- client
 
 		defer func() {
-			unregister <- client.Connection
+			unregister <- client
+			chatService.RevokeToken(token)
 			client.Connection.Close()
 		}()
 
@@ -56,7 +65,7 @@ func ChatConnection() http.HandlerFunc {
 				break
 			}
 
-			log.Printf("%s sent: %s\n", conn.RemoteAddr(), string(msg))
+			log.Printf("%s sent: %s\n", currentToken.User(), string(msg))
 
 			broadcast <- chat.Message{Sender: client.Connection, Content: msg}
 
@@ -65,12 +74,6 @@ func ChatConnection() http.HandlerFunc {
 				break
 			}
 		}
-	}
-}
-
-func GetChatUsers() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(getUserList())
 	}
 }
 
@@ -83,13 +86,13 @@ func BroadcastMessages() {
 		case client := <-unregister:
 			if _, ok := clients[client]; ok {
 				delete(clients, client)
-				client.Close()
+				client.Connection.Close()
 				sendUserList(getUserList())
 			}
 		case message := <-broadcast:
 			for client := range clients {
-				if client != message.Sender {
-					err := client.WriteMessage(websocket.TextMessage, message.Content)
+				if client.Connection != message.Sender {
+					err := client.Connection.WriteMessage(websocket.TextMessage, message.Content)
 					if err != nil {
 						log.Println(err)
 						break
@@ -102,7 +105,7 @@ func BroadcastMessages() {
 
 func getUserList() (users []string) {
 	for client := range clients {
-		users = append(users, client.RemoteAddr().String())
+		users = append(users, client.UserID)
 	}
 
 	return
@@ -110,9 +113,13 @@ func getUserList() (users []string) {
 
 func sendUserList(usersList []string) {
 	for client := range clients {
-		err := client.WriteJSON(usersList)
+		err := client.Connection.WriteJSON(usersList)
 		if err != nil {
 			log.Println(err)
 		}
 	}
+}
+
+func authenticate(token string) bool {
+	return token != ""
 }

@@ -16,6 +16,14 @@ func NewMemoryTokenRepositorysitory() *MemoryTokenRepository {
 	}
 }
 
+func (repo *MemoryTokenRepository) Get(id string) (*token.Token, error) {
+	if token, ok := repo.Tokens[id]; ok {
+		return &token, nil
+	}
+
+	return nil, errors.New("token does not exist")
+}
+
 func (repo *MemoryTokenRepository) Add(token *token.Token) error {
 	if _, ok := repo.Tokens[token.Id()]; ok {
 		return errors.New("token already prodvided")

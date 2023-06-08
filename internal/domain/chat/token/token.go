@@ -20,6 +20,10 @@ func (t *Token) Id() string {
 	return t.id.String()
 }
 
+func (t *Token) User() string {
+	return t.userId.String()
+}
+
 func (t *Token) ExpiresAfter() string {
 	return t.expiresAfter.Local().String()
 }
