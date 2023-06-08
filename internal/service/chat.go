@@ -26,6 +26,11 @@ func (cs *ChatService) GenerateAccessToken(user *user.User) (*token.Token, error
 	return token, nil
 }
 
-func (cs *ChatService) RevokeToken(id string) {
+func (cs *ChatService) RevokeToken(id string) error {
+	err := cs.tokenRepo.Revoke(id)
+	if err != nil {
+		return err
+	}
 
+	return nil
 }
