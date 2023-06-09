@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/tullur/lets-go-chat/internal/handlers"
+	"github.com/tullur/lets-go-chat/internal/handlers/ws"
 	"github.com/tullur/lets-go-chat/internal/service"
 )
 
@@ -21,10 +22,10 @@ func UserRoutes(userService *service.UserService, chatService *service.ChatServi
 func ChatRoutes(userService *service.UserService, chatService *service.ChatService) http.Handler {
 	r := chi.NewRouter()
 
-	r.Handle("/", handlers.ChatConnection(chatService))
-	r.Get("/users", handlers.GetChatUsers())
+	r.Handle("/", ws.ChatConnection(chatService))
+	r.Get("/users", ws.GetChatUsers())
 
-	go handlers.BroadcastMessages()
+	go ws.BroadcastMessages()
 
 	return r
 }

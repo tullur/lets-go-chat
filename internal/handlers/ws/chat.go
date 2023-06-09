@@ -1,4 +1,4 @@
-package handlers
+package ws
 
 import (
 	"encoding/json"
@@ -31,7 +31,7 @@ func GetChatUsers() http.HandlerFunc {
 func ChatConnection(chatService *service.ChatService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token := r.URL.Query().Get("token")
-		if !authenticate(token) {
+		if isEmpty(token) {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -120,6 +120,6 @@ func sendUserList(usersList []string) {
 	}
 }
 
-func authenticate(token string) bool {
-	return token != ""
+func isEmpty(token string) bool {
+	return token == ""
 }
