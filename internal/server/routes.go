@@ -1,25 +1,31 @@
 package server
 
 import (
-	"log"
 	"net/http"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/tullur/lets-go-chat/internal/handlers"
+	"github.com/tullur/lets-go-chat/internal/handlers/ws"
 	"github.com/tullur/lets-go-chat/internal/service"
 )
 
-func UserRoutes() http.Handler {
+func UserRoutes(userService *service.UserService, chatService *service.ChatService) http.Handler {
 	r := chi.NewRouter()
 
-	userService, err := service.NewUserService(service.WithInMemoryRepository())
-	if err != nil {
-		log.Fatalln(err)
-	}
+	r.Get("/", handlers.GetUsers(userService))
+	r.Post("/", handlers.CreateUser(userService))
+	r.Post("/login", handlers.LoginUser(userService, chatService))
 
-	r.Get("/", handlers.HandleUserList(userService))
-	r.Post("/", handlers.HandleUserCreation(userService))
-	r.Post("/login", handlers.HandleUserLogin(userService))
+	return r
+}
+
+func ChatRoutes(userService *service.UserService, chatService *service.ChatService) http.Handler {
+	r := chi.NewRouter()
+
+	r.Handle("/", ws.ChatConnection(chatService))
+	r.Get("/users", ws.GetChatUsers())
+
+	go ws.BroadcastMessages()
 
 	return r
 }

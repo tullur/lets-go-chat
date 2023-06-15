@@ -3,10 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/tullur/lets-go-chat/internal/service"
 )
@@ -27,13 +25,13 @@ type loginUserResponse struct {
 
 var requestParams RequestParams
 
-func HandleUserList(userService *service.UserService) http.HandlerFunc {
+func GetUsers(userService *service.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(userService.GetList())
 	}
 }
 
-func HandleUserCreation(userService *service.UserService) http.HandlerFunc {
+func CreateUser(userService *service.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&requestParams)
 
@@ -53,7 +51,7 @@ func HandleUserCreation(userService *service.UserService) http.HandlerFunc {
 	}
 }
 
-func HandleUserLogin(userService *service.UserService) http.HandlerFunc {
+func LoginUser(userService *service.UserService, chatService *service.ChatService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&requestParams)
 
@@ -63,12 +61,18 @@ func HandleUserLogin(userService *service.UserService) http.HandlerFunc {
 			return
 		}
 
-		responseBody := loginUserResponse{
-			Url: fmt.Sprintf("ws://fancy-chat.io/ws&token=%s", user.Id()),
+		token, err := chatService.GenerateAccessToken(user)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		w.Header().Set("X-Expires-After", time.August.String())
-		w.Header().Set("X-Rate-Limit", strconv.Itoa(rand.Intn(20)))
+		responseBody := loginUserResponse{
+			Url: fmt.Sprintf("ws://%s/v1/chat?token=%s", r.Host, token.Id()),
+		}
+
+		w.Header().Set("X-Expires-After", token.ExpiresAfter())
+		w.Header().Set("X-Rate-Limit", strconv.Itoa(100))
 		w.Header().Set("Content-Type", "application/json")
 
 		w.WriteHeader(http.StatusOK)
