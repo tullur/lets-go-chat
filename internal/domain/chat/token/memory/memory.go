@@ -6,6 +6,12 @@ import (
 	"github.com/tullur/lets-go-chat/internal/domain/chat/token"
 )
 
+var (
+	ErrTokenNotExists       = errors.New("token does not exist")
+	ErrTokenAlreadyProvided = errors.New("token already prodvided")
+	ErrTokeNotFound         = errors.New("token Not Found")
+)
+
 type MemoryTokenRepository struct {
 	Tokens map[string]token.Token
 }
@@ -21,12 +27,12 @@ func (repo *MemoryTokenRepository) Get(id string) (*token.Token, error) {
 		return &token, nil
 	}
 
-	return nil, errors.New("token does not exist")
+	return nil, ErrTokenNotExists
 }
 
 func (repo *MemoryTokenRepository) Add(token *token.Token) error {
 	if _, ok := repo.Tokens[token.Id()]; ok {
-		return errors.New("token already prodvided")
+		return ErrTokenAlreadyProvided
 	}
 
 	repo.Tokens[token.Id()] = *token
@@ -36,7 +42,7 @@ func (repo *MemoryTokenRepository) Add(token *token.Token) error {
 
 func (repo *MemoryTokenRepository) Revoke(id string) error {
 	if _, ok := repo.Tokens[id]; !ok {
-		return errors.New("token Not Found")
+		return ErrTokeNotFound
 	}
 
 	delete(repo.Tokens, id)
