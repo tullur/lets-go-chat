@@ -34,7 +34,7 @@ func Run(port string) {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Mount("/user", UserRoutes(userService, tokenService))
-		r.Mount("/chat", ChatRoutes(userService, tokenService))
+		r.Mount("/chat", ChatRoutes(tokenService))
 	})
 
 	log.Fatalln(http.ListenAndServe(port, r))

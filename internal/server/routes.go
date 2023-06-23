@@ -19,7 +19,7 @@ func UserRoutes(userService *service.UserService, chatService *service.ChatServi
 	return r
 }
 
-func ChatRoutes(userService *service.UserService, chatService *service.ChatService) http.Handler {
+func ChatRoutes(chatService *service.ChatService) http.Handler {
 	r := chi.NewRouter()
 
 	r.Handle("/", ws.ChatConnection(chatService))
