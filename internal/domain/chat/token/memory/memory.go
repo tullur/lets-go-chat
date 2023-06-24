@@ -16,7 +16,7 @@ type MemoryTokenRepository struct {
 	Tokens map[string]token.Token
 }
 
-func NewMemoryTokenRepositorysitory() *MemoryTokenRepository {
+func NewMemoryTokenRepository() *MemoryTokenRepository {
 	return &MemoryTokenRepository{
 		Tokens: make(map[string]token.Token),
 	}

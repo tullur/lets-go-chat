@@ -9,21 +9,21 @@ import (
 	"github.com/tullur/lets-go-chat/internal/domain/user"
 )
 
-var repo = NewMemoryTokenRepositorysitory()
+var repo = NewMemoryTokenRepository()
 
-func TestNewMemoryTokenRepositorysitory(t *testing.T) {
+func TestNewMemoryTokenRepository(t *testing.T) {
 	tests := []struct {
 		name string
 		want *MemoryTokenRepository
 	}{
 		{
 			name: "Correct Initialization",
-			want: NewMemoryTokenRepositorysitory(),
+			want: NewMemoryTokenRepository(),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewMemoryTokenRepositorysitory(); !reflect.DeepEqual(got, tt.want) {
+			if got := NewMemoryTokenRepository(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewMemoryTokenRepositorysitory() = %v, want %v", got, tt.want)
 			}
 		})

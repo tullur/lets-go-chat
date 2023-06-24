@@ -13,7 +13,7 @@ type ChatService struct {
 }
 
 func WithInMemoryTokenRepository() ChatConfiguration {
-	repository := memory.NewMemoryTokenRepositorysitory()
+	repository := memory.NewMemoryTokenRepository()
 
 	return func(cs *ChatService) error {
 		cs.tokenRepo = repository
