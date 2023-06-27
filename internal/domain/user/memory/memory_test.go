@@ -13,7 +13,7 @@ var repo = NewInMemoryRepository()
 func TestNewInMemoryRepository(t *testing.T) {
 	tests := []struct {
 		name string
-		want *InMemoryRepo
+		want *InMemoryRepository
 	}{
 		{
 			name: "Correct Initialization",
@@ -40,11 +40,11 @@ func TestInMemoryRepositoryOperations(t *testing.T) {
 		}
 
 		g.It("Should create user", func() {
-			g.Assert(len(repo.Users)).Equal(0)
+			g.Assert(len(repo.users)).Equal(0)
 
 			repo.Create(testUser)
 
-			g.Assert(len(repo.Users)).Equal(1)
+			g.Assert(len(repo.users)).Equal(1)
 		})
 
 		g.Describe("FindByName()", func() {
