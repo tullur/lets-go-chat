@@ -40,9 +40,9 @@ func (repo *InMemoryRepository) Create(u *user.User) error {
 	return nil
 }
 
-func (repo *InMemoryRepository) FindByName(userName string) (*user.User, error) {
+func (repo *InMemoryRepository) FindByName(name string) (*user.User, error) {
 	for _, v := range repo.users {
-		if v.Name() == userName {
+		if v.Name() == name {
 			return &v, nil
 		}
 	}

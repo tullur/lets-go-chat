@@ -22,7 +22,7 @@ func Run(port string) {
 		panic("This is panic situation")
 	})
 
-	userService, err := service.NewUserService(service.WithInMemoryRepository())
+	userService, err := service.NewUserService(service.WithMongoRepository("mongodb://localhost:27017"))
 	if err != nil {
 		log.Fatalln(err)
 	}

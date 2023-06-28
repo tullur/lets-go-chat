@@ -27,3 +27,15 @@ func (t *Token) User() string {
 func (t *Token) ExpiresAfter() string {
 	return t.expiresAfter.Local().String()
 }
+
+func (t *Token) SetID(id string) {
+
+}
+
+func (t *Token) SetUser(id string) {
+
+}
+
+func (t *Token) SetExpiresAfter(id string) {
+
+}
