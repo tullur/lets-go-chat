@@ -29,13 +29,18 @@ func (t *Token) ExpiresAfter() string {
 }
 
 func (t *Token) SetID(id string) {
-
+	t.id = uuid.MustParse(id)
 }
 
-func (t *Token) SetUser(id string) {
-
+func (t *Token) SetUser(userId string) {
+	t.userId = uuid.MustParse(userId)
 }
 
-func (t *Token) SetExpiresAfter(id string) {
+func (t *Token) SetExpiresAfter(expiresAfter string) {
+	expiresTime, err := time.Parse(time.Now().String(), expiresAfter)
+	if err != nil {
+		return
+	}
 
+	t.expiresAfter = expiresTime
 }

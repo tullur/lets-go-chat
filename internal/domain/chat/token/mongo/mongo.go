@@ -26,25 +26,6 @@ type tokenMongo struct {
 	expiresAfter string `bson:"expiresAfter"`
 }
 
-func NewFromToken(t token.Token) tokenMongo {
-	return tokenMongo{
-		id:           t.Id(),
-		userId:       t.User(),
-		expiresAfter: t.ExpiresAfter(),
-	}
-}
-
-func (tm tokenMongo) toAggregate() *token.Token {
-	t := &token.Token{}
-
-	t.SetID(tm.id)
-	t.SetUser(tm.userId)
-	t.SetExpiresAfter(tm.expiresAfter)
-
-	return t
-
-}
-
 func New(ctx context.Context, connectionURI string) (*MongoRepository, error) {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionURI))
 	if err != nil {
@@ -96,4 +77,22 @@ func (repository *MongoRepository) Revoke(id string) error {
 	}
 
 	return nil
+}
+
+func NewFromToken(t token.Token) tokenMongo {
+	return tokenMongo{
+		id:           t.Id(),
+		userId:       t.User(),
+		expiresAfter: t.ExpiresAfter(),
+	}
+}
+
+func (tm tokenMongo) toAggregate() *token.Token {
+	t := &token.Token{}
+
+	t.SetID(tm.id)
+	t.SetUser(tm.userId)
+	t.SetExpiresAfter(tm.expiresAfter)
+
+	return t
 }
