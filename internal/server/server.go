@@ -6,11 +6,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/tullur/lets-go-chat/internal/config"
 	"github.com/tullur/lets-go-chat/internal/handlers"
 	"github.com/tullur/lets-go-chat/internal/service"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
-func Run(port string) {
+func Run(conf *config.Config) {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
@@ -22,7 +25,7 @@ func Run(port string) {
 		panic("This is panic situation")
 	})
 
-	userService, err := service.NewUserService(service.WithMongoRepository("mongodb://localhost:27017"))
+	userService, err := service.NewUserService(service.WithMongoRepository(conf.Database.Host))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -37,5 +40,13 @@ func Run(port string) {
 		r.Mount("/chat", ChatRoutes(tokenService))
 	})
 
-	log.Fatalln(http.ListenAndServe(port, r))
+	server := &http.Server{
+		Handler:      r,
+		Addr:         conf.Server.Addr,
+		ReadTimeout:  conf.Server.ReadTimeout,
+		WriteTimeout: conf.Server.WriteTimeout,
+		IdleTimeout:  conf.Server.IdleTimeout,
+	}
+
+	log.Fatalln(server.ListenAndServe())
 }

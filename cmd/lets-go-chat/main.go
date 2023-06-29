@@ -1,9 +1,12 @@
 package main
 
 import (
+	"github.com/tullur/lets-go-chat/internal/config"
 	"github.com/tullur/lets-go-chat/internal/server"
 )
 
 func main() {
-	server.Run(":8080")
+	c := config.New()
+
+	server.Run(c)
 }
