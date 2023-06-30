@@ -12,6 +12,7 @@ import (
 )
 
 type Repository interface {
+	GetMessages(limit int) ([]*MessageMongo, error)
 	Add(message chat.Message) error
 }
 
@@ -20,7 +21,7 @@ type MongoRepository struct {
 	message *mongo.Collection
 }
 
-type messageMongo struct {
+type MessageMongo struct {
 	Sender  string `bson:"sender"`
 	Content string `bson:"content"`
 }
@@ -40,7 +41,7 @@ func New(ctx context.Context, connectionURI string) (*MongoRepository, error) {
 	}, nil
 }
 
-func (repository *MongoRepository) GetMessages(limit int) ([]*messageMongo, error) {
+func (repository *MongoRepository) GetMessages(limit int) ([]*MessageMongo, error) {
 	opts := options.FindOptions{}
 	opts.SetLimit(int64(limit))
 
@@ -53,10 +54,10 @@ func (repository *MongoRepository) GetMessages(limit int) ([]*messageMongo, erro
 
 	defer cursor.Close(context.Background())
 
-	var messages []*messageMongo
+	var messages []*MessageMongo
 
 	for cursor.Next(context.Background()) {
-		msg := &messageMongo{}
+		msg := &MessageMongo{}
 		log.Println(cursor.Decode(msg))
 		err := cursor.Decode(msg)
 		if err != nil {
@@ -71,7 +72,7 @@ func (repository *MongoRepository) GetMessages(limit int) ([]*messageMongo, erro
 	}
 
 	if len(messages) == 0 {
-		return []*messageMongo{}, nil
+		return []*MessageMongo{}, nil
 	}
 
 	return messages, nil
@@ -89,8 +90,8 @@ func (repository *MongoRepository) Add(message chat.Message) error {
 	return nil
 }
 
-func fromModel(in chat.Message) messageMongo {
-	return messageMongo{
+func fromModel(in chat.Message) MessageMongo {
+	return MessageMongo{
 		Sender:  in.Sender.LocalAddr().String(),
 		Content: string(in.Content),
 	}

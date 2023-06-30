@@ -1,14 +1,12 @@
 package ws
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 	"github.com/tullur/lets-go-chat/internal/domain/chat"
-	"github.com/tullur/lets-go-chat/internal/domain/chat/message"
 	"github.com/tullur/lets-go-chat/internal/service"
 )
 
@@ -52,16 +50,11 @@ func ChatConnection(chatService *service.ChatService) http.HandlerFunc {
 			return
 		}
 
-		repository, err := message.New(context.Background(), "mongodb://localhost:27017")
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
 		client := &chat.Client{UserID: currentToken.Id(), Connection: conn}
 
 		register <- client
-		msgs, err := repository.GetMessages(messageLimit)
+
+		msgs, err := chatService.GetMessages(messageLimit)
 		if err != nil {
 			log.Println(err)
 		}
@@ -87,7 +80,7 @@ func ChatConnection(chatService *service.ChatService) http.HandlerFunc {
 
 			currentMessage := chat.Message{Sender: client.Connection, Content: msg}
 
-			repository.Add(currentMessage)
+			chatService.AddMessage(currentMessage)
 
 			broadcast <- currentMessage
 

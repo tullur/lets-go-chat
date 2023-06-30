@@ -30,7 +30,10 @@ func Run(conf *config.Config) {
 		log.Fatalln(err)
 	}
 
-	tokenService, err := service.NewTokenService(service.WithInMemoryTokenRepository())
+	tokenService, err := service.NewTokenService(
+		service.WithInMemoryTokenRepository(),
+		service.WithMessageMongoRepository(conf.Database.Host),
+	)
 	if err != nil {
 		log.Fatalln(err)
 	}
