@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"log"
 
 	"github.com/tullur/lets-go-chat/internal/domain/user"
 	"github.com/tullur/lets-go-chat/internal/domain/user/memory"
@@ -75,8 +74,6 @@ func (u *UserService) LoginUser(name, password string) (*user.User, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	log.Printf("Password: %s", password)
 
 	verified, err := currentUser.VerifyPassword(password)
 	if !verified {
