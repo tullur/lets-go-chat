@@ -12,6 +12,8 @@ import (
 	"github.com/tullur/lets-go-chat/internal/service"
 )
 
+const messageLimit = 10
+
 var (
 	clients    = make(map[*chat.Client]bool)
 	register   = make(chan *chat.Client)
@@ -59,6 +61,14 @@ func ChatConnection(chatService *service.ChatService) http.HandlerFunc {
 		client := &chat.Client{UserID: currentToken.Id(), Connection: conn}
 
 		register <- client
+		msgs, err := repository.GetMessages(messageLimit)
+		if err != nil {
+			log.Println(err)
+		}
+
+		for _, msg := range msgs {
+			log.Println(msg.Content)
+		}
 
 		defer func() {
 			unregister <- client

@@ -2,9 +2,11 @@ package message
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/tullur/lets-go-chat/internal/domain/chat"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -36,6 +38,43 @@ func New(ctx context.Context, connectionURI string) (*MongoRepository, error) {
 		db:      db,
 		message: messages,
 	}, nil
+}
+
+func (repository *MongoRepository) GetMessages(limit int) ([]*messageMongo, error) {
+	opts := options.FindOptions{}
+	opts.SetLimit(int64(limit))
+
+	query := bson.M{}
+
+	cursor, err := repository.message.Find(context.Background(), query, &opts)
+	if err != nil {
+		return nil, err
+	}
+
+	defer cursor.Close(context.Background())
+
+	var messages []*messageMongo
+
+	for cursor.Next(context.Background()) {
+		msg := &messageMongo{}
+		log.Println(cursor.Decode(msg))
+		err := cursor.Decode(msg)
+		if err != nil {
+			return nil, err
+		}
+
+		messages = append(messages, msg)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(messages) == 0 {
+		return []*messageMongo{}, nil
+	}
+
+	return messages, nil
 }
 
 func (repository *MongoRepository) Add(message chat.Message) error {
