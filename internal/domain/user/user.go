@@ -47,6 +47,22 @@ func (u *User) Name() string {
 	return u.name
 }
 
+func (u *User) Password() string {
+	return u.password
+}
+
+func (u *User) SetID(id uuid.UUID) {
+	u.id = id
+}
+
+func (u *User) SetName(name string) {
+	u.name = name
+}
+
+func (u *User) SetPassword(password string) {
+	u.password = password
+}
+
 func (u *User) VerifyPassword(password string) (bool, error) {
 	verified := hasher.CheckPasswordHash(password, u.password)
 	if !verified {

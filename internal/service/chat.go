@@ -1,6 +1,10 @@
 package service
 
 import (
+	"context"
+
+	"github.com/tullur/lets-go-chat/internal/domain/chat"
+	"github.com/tullur/lets-go-chat/internal/domain/chat/message"
 	"github.com/tullur/lets-go-chat/internal/domain/chat/token"
 	"github.com/tullur/lets-go-chat/internal/domain/chat/token/memory"
 	"github.com/tullur/lets-go-chat/internal/domain/user"
@@ -9,7 +13,8 @@ import (
 type ChatConfiguration func(cs *ChatService) error
 
 type ChatService struct {
-	tokenRepo token.Repository
+	tokenRepo   token.Repository
+	messageRepo message.Repository
 }
 
 func WithInMemoryTokenRepository() ChatConfiguration {
@@ -17,6 +22,18 @@ func WithInMemoryTokenRepository() ChatConfiguration {
 
 	return func(cs *ChatService) error {
 		cs.tokenRepo = repository
+		return nil
+	}
+}
+
+func WithMessageMongoRepository(connectionURI string) ChatConfiguration {
+	return func(cs *ChatService) error {
+		msgRepo, err := message.New(context.Background(), connectionURI)
+		if err != nil {
+			return err
+		}
+
+		cs.messageRepo = msgRepo
 		return nil
 	}
 }
@@ -56,6 +73,24 @@ func (cs *ChatService) GenerateAccessToken(user *user.User) (*token.Token, error
 
 func (cs *ChatService) RevokeToken(id string) error {
 	err := cs.tokenRepo.Revoke(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cs *ChatService) GetMessages(limit int) ([]*message.MessageMongo, error) {
+	messages, err := cs.messageRepo.GetMessages(limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return messages, nil
+}
+
+func (cs *ChatService) AddMessage(msg chat.Message) error {
+	err := cs.messageRepo.Add(msg)
 	if err != nil {
 		return err
 	}

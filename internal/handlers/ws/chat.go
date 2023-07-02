@@ -10,6 +10,8 @@ import (
 	"github.com/tullur/lets-go-chat/internal/service"
 )
 
+const messageLimit = 10
+
 var (
 	clients    = make(map[*chat.Client]bool)
 	register   = make(chan *chat.Client)
@@ -52,6 +54,21 @@ func ChatConnection(chatService *service.ChatService) http.HandlerFunc {
 
 		register <- client
 
+		msgs, err := chatService.GetMessages(messageLimit)
+		if err != nil {
+			log.Println(err)
+		}
+
+		for _, msg := range msgs {
+			err := client.Connection.WriteMessage(websocket.TextMessage, []byte(msg.Content))
+			if err != nil {
+				log.Println(err)
+				break
+			}
+
+			log.Println(msg.Content)
+		}
+
 		defer func() {
 			unregister <- client
 			chatService.RevokeToken(token)
@@ -67,7 +84,11 @@ func ChatConnection(chatService *service.ChatService) http.HandlerFunc {
 
 			log.Printf("%s sent: %s\n", currentToken.User(), string(msg))
 
-			broadcast <- chat.Message{Sender: client.Connection, Content: msg}
+			currentMessage := chat.Message{Sender: client.Connection, Content: msg}
+
+			chatService.AddMessage(currentMessage)
+
+			broadcast <- currentMessage
 
 			if err = conn.WriteMessage(msgType, msg); err != nil {
 				log.Println(err)

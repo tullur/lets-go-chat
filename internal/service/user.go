@@ -1,8 +1,12 @@
 package service
 
 import (
+	"context"
+	"log"
+
 	"github.com/tullur/lets-go-chat/internal/domain/user"
 	"github.com/tullur/lets-go-chat/internal/domain/user/memory"
+	"github.com/tullur/lets-go-chat/internal/domain/user/mongo"
 )
 
 type UserConfiguration func(u *UserService) error
@@ -36,6 +40,18 @@ func WithInMemoryRepository() UserConfiguration {
 	return WithRepository(repository)
 }
 
+func WithMongoRepository(connection string) UserConfiguration {
+	return func(u *UserService) error {
+		repository, err := mongo.New(context.Background(), connection)
+		if err != nil {
+			return err
+		}
+
+		u.repository = repository
+		return nil
+	}
+}
+
 func (u *UserService) GetList() []user.User {
 	return u.repository.List()
 }
@@ -59,6 +75,8 @@ func (u *UserService) LoginUser(name, password string) (*user.User, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Password: %s", password)
 
 	verified, err := currentUser.VerifyPassword(password)
 	if !verified {
