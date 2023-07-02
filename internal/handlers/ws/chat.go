@@ -60,6 +60,12 @@ func ChatConnection(chatService *service.ChatService) http.HandlerFunc {
 		}
 
 		for _, msg := range msgs {
+			err := client.Connection.WriteMessage(websocket.TextMessage, []byte(msg.Content))
+			if err != nil {
+				log.Println(err)
+				break
+			}
+
 			log.Println(msg.Content)
 		}
 
