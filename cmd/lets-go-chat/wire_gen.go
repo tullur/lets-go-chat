@@ -12,38 +12,11 @@ import (
 
 // Injectors from wire.go:
 
-func NewUser(dbHost string) (*service.UserService, error) {
-	userService, err := initializeUserService(dbHost)
+func NewUser(connection string) (*service.UserService, error) {
+	userConfiguration := service.WithMongoRepository(connection)
+	userService, err := service.NewUserService(userConfiguration)
 	if err != nil {
 		return nil, err
 	}
 	return userService, nil
-}
-
-func NewChat(dbHost string) (*service.ChatService, error) {
-	chatService, err := initializeChatService(dbHost)
-	if err != nil {
-		return nil, err
-	}
-	return chatService, nil
-}
-
-// wire.go:
-
-func initializeUserService(dbHost string) (*service.UserService, error) {
-	userService, err := service.NewUserService(service.WithMongoRepository(dbHost))
-	if err != nil {
-		return nil, err
-	}
-
-	return userService, nil
-}
-
-func initializeChatService(dbHost string) (*service.ChatService, error) {
-	chatService, err := service.NewChatService(service.WithInMemoryTokenRepository(), service.WithMessageMongoRepository(dbHost))
-	if err != nil {
-		return nil, err
-	}
-
-	return chatService, nil
 }

@@ -1,0 +1,99 @@
+definitions:
+  handlers.RequestParams:
+    properties:
+      password:
+        example: Qwerty1234
+        type: string
+      userName:
+        example: Gopher
+        type: string
+    type: object
+  handlers.createUserResponse:
+    properties:
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      userName:
+        example: Gopher
+        type: string
+    type: object
+  handlers.loginUserResponse:
+    properties:
+      url:
+        example: ws://localhost:8080/v1/chat?token=b8606575-4593-424f-9f70-11b5dce79d54
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /:
+    get:
+      description: Show "Hello, World" and current time
+      responses:
+        "200":
+          description: OK
+      summary: Greeter
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Provide login token to the chat service
+      parameters:
+      - description: Add user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RequestParams'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.loginUserResponse'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Login user
+      tags:
+      - users
+  /users:
+    get:
+      description: get users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: User List
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: post user
+      parameters:
+      - description: Login user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RequestParams'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.createUserResponse'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Creat user
+      tags:
+      - users
+swagger: "2.0"

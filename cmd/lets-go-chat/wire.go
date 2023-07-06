@@ -8,8 +8,8 @@ import (
 	"github.com/tullur/lets-go-chat/internal/service"
 )
 
-func NewUser(dbHost string) (*service.UserService, error) {
-	wire.Build(service.WithInMemoryRepository, service.NewUserService)
+func NewUser(connection string) (*service.UserService, error) {
+	wire.Build(service.WithMongoRepository, service.NewUserService)
 
 	return nil, nil
 }
