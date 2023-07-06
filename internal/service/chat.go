@@ -10,6 +10,8 @@ import (
 	"github.com/tullur/lets-go-chat/internal/domain/user"
 )
 
+const timeoutDuration = 5
+
 type ChatConfiguration func(cs *ChatService) error
 
 type ChatService struct {
@@ -28,7 +30,7 @@ func WithInMemoryTokenRepository() ChatConfiguration {
 
 func WithMessageMongoRepository(connectionURI string) ChatConfiguration {
 	return func(cs *ChatService) error {
-		msgRepo, err := message.New(context.Background(), connectionURI)
+		msgRepo, err := message.New(context.Background(), connectionURI, timeoutDuration)
 		if err != nil {
 			return err
 		}

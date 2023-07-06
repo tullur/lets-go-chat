@@ -2,7 +2,6 @@ package message
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/tullur/lets-go-chat/internal/domain/chat"
@@ -19,6 +18,7 @@ type Repository interface {
 type MongoRepository struct {
 	db      *mongo.Database
 	message *mongo.Collection
+	timeout time.Duration
 }
 
 type MessageMongo struct {
@@ -26,7 +26,7 @@ type MessageMongo struct {
 	Content string `bson:"content"`
 }
 
-func New(ctx context.Context, connectionURI string) (*MongoRepository, error) {
+func New(ctx context.Context, connectionURI string, timeout int) (*MongoRepository, error) {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionURI))
 	if err != nil {
 		return nil, err
@@ -38,16 +38,19 @@ func New(ctx context.Context, connectionURI string) (*MongoRepository, error) {
 	return &MongoRepository{
 		db:      db,
 		message: messages,
+		timeout: time.Duration(timeout) * time.Second,
 	}, nil
 }
 
-func (repository *MongoRepository) GetMessages(limit int) ([]*MessageMongo, error) {
+func (r *MongoRepository) GetMessages(limit int) ([]*MessageMongo, error) {
 	opts := options.FindOptions{}
+
+	opts.SetMaxTime(r.timeout)
 	opts.SetLimit(int64(limit))
 
 	query := bson.M{}
 
-	cursor, err := repository.message.Find(context.Background(), query, &opts)
+	cursor, err := r.message.Find(context.Background(), query, &opts)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +61,7 @@ func (repository *MongoRepository) GetMessages(limit int) ([]*MessageMongo, erro
 
 	for cursor.Next(context.Background()) {
 		msg := &MessageMongo{}
-		log.Println(cursor.Decode(msg))
+
 		err := cursor.Decode(msg)
 		if err != nil {
 			return nil, err
@@ -78,11 +81,11 @@ func (repository *MongoRepository) GetMessages(limit int) ([]*MessageMongo, erro
 	return messages, nil
 }
 
-func (repository *MongoRepository) Add(message chat.Message) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (r *MongoRepository) Add(message chat.Message) error {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	_, err := repository.message.InsertOne(ctx, fromModel(message))
+	_, err := r.message.InsertOne(ctx, fromModel(message))
 	if err != nil {
 		return err
 	}

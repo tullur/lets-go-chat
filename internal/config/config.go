@@ -27,7 +27,8 @@ type serverConfig struct {
 }
 
 type dbConfig struct {
-	Host string
+	Host    string
+	Timeout string
 }
 
 func New() *Config {

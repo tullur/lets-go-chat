@@ -16,8 +16,9 @@ var (
 )
 
 type MongoRepository struct {
-	db    *mongo.Database
-	token *mongo.Collection
+	db      *mongo.Database
+	token   *mongo.Collection
+	timeout time.Duration
 }
 
 type tokenMongo struct {
@@ -26,7 +27,7 @@ type tokenMongo struct {
 	expiresAfter string `bson:"expiresAfter"`
 }
 
-func New(ctx context.Context, connectionURI string) (*MongoRepository, error) {
+func New(ctx context.Context, connectionURI string, timeout int) (*MongoRepository, error) {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionURI))
 	if err != nil {
 		return nil, err
@@ -36,18 +37,19 @@ func New(ctx context.Context, connectionURI string) (*MongoRepository, error) {
 	tokens := db.Collection("tokens")
 
 	return &MongoRepository{
-		db:    db,
-		token: tokens,
+		db:      db,
+		token:   tokens,
+		timeout: time.Duration(timeout) * time.Second,
 	}, nil
 }
 
-func (repository *MongoRepository) Get(id string) (*token.Token, error) {
+func (r *MongoRepository) Get(id string) (*token.Token, error) {
 	var t tokenMongo
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	result := repository.token.FindOne(ctx, bson.M{"id": id})
+	result := r.token.FindOne(ctx, bson.M{"id": id})
 
 	err := result.Decode(&t)
 	if err != nil {
@@ -58,7 +60,7 @@ func (repository *MongoRepository) Get(id string) (*token.Token, error) {
 }
 
 func (repository *MongoRepository) Add(token *token.Token) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), repository.timeout)
 	defer cancel()
 
 	internal := NewFromToken(*token)
