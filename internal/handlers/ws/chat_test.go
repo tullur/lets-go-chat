@@ -17,7 +17,7 @@ func TestChat(t *testing.T) {
 	g := goblin.Goblin(t)
 
 	// Mock it
-	tokenService, err := service.NewTokenService(service.WithInMemoryTokenRepository())
+	tokenService, err := service.NewChatService(service.WithInMemoryTokenRepository())
 	if err != nil {
 		g.Fail(err)
 	}
