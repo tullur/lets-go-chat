@@ -40,7 +40,7 @@ func WithMessageMongoRepository(connectionURI string) ChatConfiguration {
 	}
 }
 
-func NewTokenService(cfgs ...ChatConfiguration) (*ChatService, error) {
+func NewChatService(cfgs ...ChatConfiguration) (*ChatService, error) {
 	cs := &ChatService{}
 
 	for _, cfg := range cfgs {

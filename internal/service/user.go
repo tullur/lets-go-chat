@@ -15,15 +15,16 @@ type UserService struct {
 	repository user.Repository
 }
 
-func NewUserService(cfgs ...UserConfiguration) (*UserService, error) {
+func NewUserService(cfgs UserConfiguration) (*UserService, error) {
 	us := &UserService{}
 
-	for _, cfg := range cfgs {
-		err := cfg(us)
-		if err != nil {
-			return nil, err
-		}
-	}
+	cfgs(us)
+	// for _, cfg := range cfgs {
+	// 	err := cfg(us)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
 	return us, nil
 }

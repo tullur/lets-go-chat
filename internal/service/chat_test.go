@@ -11,7 +11,7 @@ func TestChatService(t *testing.T) {
 	g := goblin.Goblin(t)
 
 	g.Describe("Chat Service Operations", func() {
-		cs, err := NewTokenService(WithInMemoryTokenRepository())
+		cs, err := NewChatService(WithInMemoryTokenRepository())
 		if err != nil {
 			g.Fail(err)
 		}

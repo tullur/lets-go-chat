@@ -30,7 +30,7 @@ func Run(conf *config.Config) {
 		log.Fatalln(err)
 	}
 
-	tokenService, err := service.NewTokenService(
+	chatService, err := service.NewChatService(
 		service.WithInMemoryTokenRepository(),
 		service.WithMessageMongoRepository(conf.Database.Host),
 	)
@@ -39,8 +39,8 @@ func Run(conf *config.Config) {
 	}
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Mount("/user", UserRoutes(userService, tokenService))
-		r.Mount("/chat", ChatRoutes(tokenService))
+		r.Mount("/user", UserRoutes(userService, chatService))
+		r.Mount("/chat", ChatRoutes(chatService))
 	})
 
 	server := &http.Server{

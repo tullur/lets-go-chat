@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+//go:generate mockgen -source=repository.go -destination=./mocks/mock_message_repository.go -package=mocks
 type Repository interface {
 	GetMessages(limit int) ([]*MessageMongo, error)
 	Add(message chat.Message) error
