@@ -33,3 +33,11 @@ func TestCheckPasswordHash(t *testing.T) {
 		t.Error("Compare is not correct")
 	}
 }
+
+func BenchmarkPasswordHash(b *testing.B) {
+	var password = "benchmark-spec-password"
+
+	for n := 0; n < b.N; n++ {
+		HashPassword(password)
+	}
+}

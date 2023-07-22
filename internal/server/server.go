@@ -39,6 +39,8 @@ func Run(conf *config.Config) {
 	}
 
 	r.Route("/v1", func(r chi.Router) {
+		r.Mount("/debug", middleware.Profiler())
+
 		r.Mount("/user", UserRoutes(userService, tokenService))
 		r.Mount("/chat", ChatRoutes(tokenService))
 	})

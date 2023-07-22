@@ -28,3 +28,5 @@ tmp/
 .env
 
 .idea
+.pdf
+.svg
